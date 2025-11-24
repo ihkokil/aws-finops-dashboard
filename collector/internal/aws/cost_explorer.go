@@ -44,7 +44,7 @@ func (c *CostExplorerClient) GetMonthlyCostByService(ctx context.Context, startD
 
 	out, err := c.client.GetCostAndUsage(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("Cost Explorer GetCostAndUsage error: %w", err)
+		return nil, fmt.Errorf("cost explorer GetCostAndUsage error: %w", err)
 	}
 
 	serviceMap := make(map[string]*models.ServiceCost)
@@ -112,7 +112,7 @@ func (c *CostExplorerClient) GetDailyCostLast90Days(ctx context.Context) ([]mode
 
 	out, err := c.client.GetCostAndUsage(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("Cost Explorer GetCostAndUsage daily error: %w", err)
+		return nil, fmt.Errorf("cost explorer GetCostAndUsage daily error: %w", err)
 	}
 
 	var dailyCosts []models.DailyCost
@@ -155,7 +155,7 @@ func (c *CostExplorerClient) GetCostByTag(ctx context.Context, tagKey, startDate
 
 	out, err := c.client.GetCostAndUsage(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("Cost Explorer GetCostByTag error: %w", err)
+		return nil, fmt.Errorf("cost explorer GetCostByTag error: %w", err)
 	}
 
 	tagMap := make(map[string]float64)
@@ -253,9 +253,9 @@ func (c *CostExplorerClient) GetSavingsPlanUtilization(ctx context.Context) (mod
 		return sp, nil
 	}
 
-	if out.SavingsPlansUtilizationByTime != nil {
+	if out.SavingsPlansUtilizationsByTime != nil {
 		var totalUsed, totalUnused, totalCommitment float64
-		for _, u := range out.SavingsPlansUtilizationByTime {
+		for _, u := range out.SavingsPlansUtilizationsByTime {
 			if u.Utilization != nil {
 				if u.Utilization.UsedCommitment != nil {
 					val, _ := strconv.ParseFloat(*u.Utilization.UsedCommitment, 64)
@@ -311,13 +311,12 @@ func (c *CostExplorerClient) GetReservedInstanceUtilization(ctx context.Context)
 		return ri, nil
 	}
 
-	if out.TotalByTime != nil && out.TotalByTime.Utilization != nil {
-		u := out.TotalByTime.Utilization
-		if u.UtilizationPercentage != nil {
-			ri.UtilizationPercent, _ = strconv.ParseFloat(*u.UtilizationPercentage, 64)
+	if out.Total != nil {
+		if out.Total.UtilizationPercentage != nil {
+			ri.UtilizationPercent, _ = strconv.ParseFloat(*out.Total.UtilizationPercentage, 64)
 		}
-		if u.UnusedHours != nil {
-			ri.UnusedHours, _ = strconv.ParseFloat(*u.UnusedHours, 64)
+		if out.Total.UnusedHours != nil {
+			ri.UnusedHours, _ = strconv.ParseFloat(*out.Total.UnusedHours, 64)
 		}
 		ri.CoveragePercentage = ri.UtilizationPercent
 		ri.WasteCost = ri.UnusedHours * 0.05 // Average estimated hourly rate

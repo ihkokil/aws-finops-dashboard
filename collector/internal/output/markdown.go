@@ -12,7 +12,7 @@ import (
 
 // WriteMarkdown generates an executive Markdown summary report.
 func WriteMarkdown(report *models.Report, outputDir string) (string, error) {
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0750); err != nil {
 		return "", fmt.Errorf("failed to create output directory: %w", err)
 	}
 
@@ -70,7 +70,7 @@ func WriteMarkdown(report *models.Report, outputDir string) (string, error) {
 
 	if len(mediums) > 0 {
 		sb.WriteString("## 🟡 Medium Severity Findings (>$10/month waste)\n\n")
-		for i, f := range mediums {
+		for _, f := range mediums {
 			sb.WriteString(fmt.Sprintf("- **%s** (`%s`): $%.2f/month — %s\n", f.ResourceName, f.ResourceType, f.MonthlyWasteCost, f.Recommendation))
 		}
 		sb.WriteString("\n")
@@ -107,13 +107,13 @@ func WriteMarkdown(report *models.Report, outputDir string) (string, error) {
 	}
 
 	content := sb.String()
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filePath, []byte(content), 0600); err != nil {
 		return "", fmt.Errorf("failed to write Markdown report file: %w", err)
 	}
 
 	// Also write latest
 	latestPath := filepath.Join(outputDir, "report-latest.md")
-	_ = os.WriteFile(latestPath, []byte(content), 0644)
+	_ = os.WriteFile(latestPath, []byte(content), 0600)
 
 	return filePath, nil
 }

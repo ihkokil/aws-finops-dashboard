@@ -61,8 +61,8 @@ func (r *RightsizingAnalyzer) FindRightsizingOpportunities(ctx context.Context) 
 			if rec.CurrentInstance.ResourceId != nil {
 				resourceID = *rec.CurrentInstance.ResourceId
 			}
-			if rec.CurrentInstance.InstanceOnDemandCost != nil {
-				currentCost, _ = strconv.ParseFloat(*rec.CurrentInstance.InstanceOnDemandCost, 64)
+			if rec.CurrentInstance.MonthlyCost != nil {
+				currentCost, _ = strconv.ParseFloat(*rec.CurrentInstance.MonthlyCost, 64)
 			}
 			if rec.CurrentInstance.ResourceDetails != nil && rec.CurrentInstance.ResourceDetails.EC2ResourceDetails != nil {
 				if rec.CurrentInstance.ResourceDetails.EC2ResourceDetails.InstanceType != nil {
@@ -71,8 +71,8 @@ func (r *RightsizingAnalyzer) FindRightsizingOpportunities(ctx context.Context) 
 			}
 			if rec.CurrentInstance.Tags != nil {
 				for _, t := range rec.CurrentInstance.Tags {
-					if aws.ToString(t.Key) == "Name" {
-						resourceName = aws.ToString(t.Value)
+					if aws.ToString(t.Key) == "Name" && len(t.Values) > 0 {
+						resourceName = t.Values[0]
 					}
 				}
 			}

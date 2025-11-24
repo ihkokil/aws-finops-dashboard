@@ -109,7 +109,7 @@ func (r *RDSAnalyzer) FindIdleRDSInstances(ctx context.Context, days int) ([]mod
 			recommendation = fmt.Sprintf("Idle RDS instance %s (%s) — avg connections %.1f over %d days. Consider Aurora Serverless v2 or stop instance outside business hours.", dbID, dbClass, avgConn, days)
 			remediation = []string{
 				fmt.Sprintf("aws rds stop-db-instance --db-instance-identifier %s --region %s", dbID, r.region),
-				fmt.Sprintf("Consider migrating to Aurora Serverless v2 for automatic scaling down to 0.5 ACU"),
+				"Consider migrating to Aurora Serverless v2 for automatic scaling down to 0.5 ACU",
 			}
 		} else {
 			category = models.CategoryRightsizing

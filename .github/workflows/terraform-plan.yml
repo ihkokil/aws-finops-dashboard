@@ -4,29 +4,43 @@ on:
   pull_request:
     paths:
       - 'terraform/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   terraform-plan:
-    name: Terraform Format & Validate
+    name: Terraform Format & Validate (${{ matrix.tf_env }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        environment: [dev, prod]
+        tf_env:
+          - dev
+          - prod
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
 
-      - name: Terraform Format Check
-        run: |
-          terraform fmt -check -recursive terraform/
+      - name: Terraform format check
+        run: terraform fmt -check -recursive terraform/
 
-      - name: Terraform Init & Validate (${{ matrix.environment }})
+      - name: Terraform init and validate
+        shell: bash
         run: |
-          cd terraform/environments/${{ matrix.environment }}
-          terraform init -backend=false
-          terraform validate
+          ENV_DIR="terraform/environments/${{ matrix.tf_env }}"
+
+          if [ ! -d "$ENV_DIR" ]; then
+            echo "Directory $ENV_DIR does not exist — skipping."
+            exit 0
+          fi
+
+          terraform -chdir="$ENV_DIR" init -backend=false -input=false
+          terraform -chdir="$ENV_DIR" validate

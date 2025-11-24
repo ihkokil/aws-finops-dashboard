@@ -11,7 +11,7 @@ import (
 
 // WriteJSON exports the full report struct to a formatted JSON file.
 func WriteJSON(report *models.Report, outputDir string) (string, error) {
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0750); err != nil {
 		return "", fmt.Errorf("failed to create output directory: %w", err)
 	}
 
@@ -23,13 +23,13 @@ func WriteJSON(report *models.Report, outputDir string) (string, error) {
 		return "", fmt.Errorf("failed to marshal JSON report: %w", err)
 	}
 
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0600); err != nil {
 		return "", fmt.Errorf("failed to write JSON report file: %w", err)
 	}
 
 	// Also update latest link / file
 	latestPath := filepath.Join(outputDir, "report-latest.json")
-	_ = os.WriteFile(latestPath, data, 0644)
+	_ = os.WriteFile(latestPath, data, 0600)
 
 	return filePath, nil
 }

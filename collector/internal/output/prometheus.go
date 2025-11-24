@@ -171,13 +171,20 @@ func UpdateMetrics(report *models.Report) {
 // ServeMetrics starts an HTTP server on the specified port serving /metrics.
 func ServeMetrics(port int) error {
 	initMetrics()
-	http.Handle("/metrics", promhttp.Handler())
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
 	})
-	addr := fmt.Sprintf(":%d", port)
-	return http.ListenAndServe(addr, nil)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+	}
+	return server.ListenAndServe()
 }
 
 // RecordRunDuration helper function for metric recording.

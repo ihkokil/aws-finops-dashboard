@@ -12,14 +12,14 @@ import (
 
 // WriteCSV exports findings to a flat CSV file suitable for spreadsheet import.
 func WriteCSV(report *models.Report, outputDir string) (string, error) {
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0750); err != nil {
 		return "", fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	filename := fmt.Sprintf("report-%s.csv", report.GeneratedAt.Format("2006-01-02"))
 	filePath := filepath.Join(outputDir, filename)
 
-	file, err := os.Create(filePath)
+	file, err := os.OpenFile(filepath.Clean(filePath), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return "", fmt.Errorf("failed to create CSV file: %w", err)
 	}
@@ -76,7 +76,7 @@ func WriteCSV(report *models.Report, outputDir string) (string, error) {
 	_ = strconv.Itoa(len(report.Findings))
 
 	latestPath := filepath.Join(outputDir, "report-latest.csv")
-	_ = os.WriteFile(latestPath, []byte(""), 0644) // touch latest copy
+	_ = os.WriteFile(latestPath, []byte(""), 0600) // touch latest copy
 
 	return filePath, nil
 }

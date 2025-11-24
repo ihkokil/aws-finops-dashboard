@@ -190,11 +190,13 @@ The collector **physically cannot mutate or delete** any AWS resource under any 
 
 ---
 
-## 👤 Author
+## 👤 Author & Contact
 
 **Md. Iqbal Haider Khan**
 - Email: [ihkokil@gmail.com](mailto:ihkokil@gmail.com)
-- GitHub: [@ihkokil](https://github.com/ihkokil)
-- LinkedIn: [Md. Iqbal Haider Khan](https://www.linkedin.com/in/ihkokil/)
+- LinkedIn: [https://www.linkedin.com/in/ihkokil/](https://www.linkedin.com/in/ihkokil/)
+- GitHub: [https://www.github.com/ihkokil/](https://www.github.com/ihkokil/)
 
+## 📜 License
 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
