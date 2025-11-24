@@ -1,0 +1,89 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 4,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "90-Day Spend Trend",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 18, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "aws_finops_total_monthly_spend_dollars",
+          "legendFormat": "Monthly Spend",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Month-over-Month Change %",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "((aws_finops_total_monthly_spend_dollars - aws_finops_total_monthly_spend_dollars offset 30d) / aws_finops_total_monthly_spend_dollars offset 30d) * 100 or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Spend Forecast vs Actuals",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "aws_finops_total_monthly_spend_dollars",
+          "legendFormat": "Actual Spend",
+          "refId": "A"
+        },
+        {
+          "expr": "aws_finops_monthly_forecast_dollars{confidence_level=\"mean\"}",
+          "legendFormat": "Forecast Mean",
+          "refId": "B"
+        },
+        {
+          "expr": "aws_finops_monthly_forecast_dollars{confidence_level=\"upper\"}",
+          "legendFormat": "Forecast Upper Bound",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        }
+      }
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["finops", "trends", "aws"],
+  "time": { "from": "now-90d", "to": "now" },
+  "title": "Spend Trends & Forecasting",
+  "uid": "finops-trends"
+}
