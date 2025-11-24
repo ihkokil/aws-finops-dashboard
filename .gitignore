@@ -1,0 +1,43 @@
+# Binaries
+bin/
+collector/collector
+collector/collector.exe
+
+# Go build cache & artifacts
+*.o
+*.a
+*.so
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# Environment variables & local secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Reports directory generated files (keep example-report.md)
+reports/*.json
+reports/*.csv
+reports/report-*.md
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker local data
+dashboard/grafana-data/
+dashboard/prometheus-data/
