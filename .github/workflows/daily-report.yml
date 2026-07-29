@@ -1,0 +1,100 @@
+name: Daily FinOps Report
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+  issues: write
+
+jobs:
+  collect-and-report:
+    name: Run Collector & Generate Daily Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: collector/go.sum
+
+      - name: Build Collector Binary
+        run: |
+          cd collector
+          go build -o collector ./cmd/collector
+
+      - name: Run FinOps Collector
+        run: |
+          ./collector/collector --output-format all --output-dir reports/ --days 14
+
+      - name: Commit Reports to Repository
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/
+          if git diff --staged --quiet; then
+            echo "No report changes to commit."
+          else
+            git commit -m "chore(report): daily finops report $(date +%Y-%m-%d) [skip ci]"
+            git push
+          fi
+
+      - name: Upload JSON Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finops-report-json
+          path: reports/report-*.json
+
+      - name: Post Summary to Slack
+        if: secrets.SLACK_WEBHOOK_URL != ''
+        run: |
+          LATEST_MD=$(ls -t reports/report-*.md | head -n 1)
+          SUMMARY=$(head -n 25 "$LATEST_MD")
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"📊 *AWS FinOps Daily Report Summary*\n\`\`\`\n$SUMMARY\n\`\`\`\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
+
+      - name: Auto-Create GitHub Issue for Critical Waste Findings
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const glob = require('glob');
+            const files = glob.sync('reports/report-*.json');
+            if (files.length === 0) return;
+            
+            const latestFile = files.sort().pop();
+            const report = JSON.parse(fs.readFileSync(latestFile, 'utf8'));
+            
+            if (report.total_monthly_waste > 500.0) {
+              const issueTitle = `🚨 Critical AWS Cost Waste Detected: $${report.total_monthly_waste.toFixed(2)}/month`;
+              let body = `## ⚠️ High Cost Waste Alert\n\n- **Account:** \`${report.account_id}\`\n- **Identified Waste:** $${report.total_monthly_waste.toFixed(2)}/month\n- **Waste Percentage:** ${report.waste_percentage.toFixed(1)}%\n\n### Top Critical Findings:\n`;
+              
+              report.findings.filter(f => f.severity === 'critical').slice(0, 5).forEach(f => {
+                body += `- **${f.resource_name}** (\`${f.resource_type}\`): $${f.monthly_waste_cost.toFixed(2)}/mo — ${f.recommendation}\n`;
+              });
+              
+              body += `\n*Automated issue created by AWS FinOps Daily Report workflow.*`;
+              
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: body,
+                labels: ['finops', "cost-waste"]
+              });
+            }
