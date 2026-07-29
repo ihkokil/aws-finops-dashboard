@@ -1,0 +1,32 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+
+jobs:
+  terraform-plan:
+    name: Terraform Format & Validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, prod]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Format Check
+        run: |
+          terraform fmt -check -recursive terraform/
+
+      - name: Terraform Init & Validate (${{ matrix.environment }})
+        run: |
+          cd terraform/environments/${{ matrix.environment }}
+          terraform init -backend=false
+          terraform validate
