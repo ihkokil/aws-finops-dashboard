@@ -1,0 +1,83 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Go Test & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: collector/go.sum
+
+      - name: Run Go Vet
+        run: |
+          cd collector
+          go vet ./...
+
+      - name: Run Unit Tests
+        run: |
+          cd collector
+          go test -v -race ./...
+
+      - name: Install staticcheck & gosec
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run Staticcheck
+        run: |
+          cd collector
+          staticcheck ./...
+
+      - name: Run Gosec Security Audit
+        run: |
+          cd collector
+          gosec -quiet ./...
+
+  build:
+    name: Build Binary & Container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Collector Binary
+        run: |
+          cd collector
+          go build -v -o collector ./cmd/collector
+
+      - name: Docker Build Test
+        run: |
+          cd collector
+          docker build -t finops-collector:test .
+
+  lint-dashboards:
+    name: Validate Grafana Dashboard JSON
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate JSON Syntax
+        run: |
+          for f in dashboard/grafana/dashboards/*.json; do
+            echo "Validating $f..."
+            python3 -m json.tool "$f" > /dev/null
+          done
+          echo "All Grafana dashboard JSON files valid!"
